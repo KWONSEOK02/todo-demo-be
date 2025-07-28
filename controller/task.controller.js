@@ -5,17 +5,20 @@ const taskController = {};
 taskController.createTask = async (req, res) => {
   try {
     const { task, isComplete } = req.body; // 클라이언트의 요청 body에서 task와 isComplete 값을 추출
-    const newTask = new Task({ task, isComplete });
+    const {userId} = req;
+    const newTask = new Task({ task, isComplete, author: userId });
     await newTask.save();
     res.status(200).json({ status: "ok", data: newTask });
   } catch (err) {
-    res.status(400).json({ status: 'fail', error: err });
+    res.status(400).json({ status: 'fail', message: err.message || "작업 생성 중 오류가 발생했습니다." });
   }
 };
 
 taskController.getTask = async (req, res) => {
     try {
-      const taskList = await Task.find({}).select("-__v");
+      const { userId } = req; //req에서 userId를 추출 <- 인증 미들웨어에서 정의된(req.userId) userId 사용해야함. 추출 안하고 userid 사용 시 undefined로 오류 발생
+      const taskList = await Task.find({ author: userId}).select("-__v").populate("author"); // 토큰에서 추출한 유저 ID로 그 유저 정보만 추출
+      //console.log("getTask_taskList_result", taskList);
       res.status(200).json({ status: "ok", data: taskList });
     } catch (err) {
       res.status(400).json({ status: "fail", error: err });
@@ -57,7 +60,7 @@ taskController.updateTask = async (req, res) => {
     }
     res.status(200).json({ status: "success", data: updatedTask });
   } catch (error) {
-    res.status(400).json({ status: "fail", error });
+    res.status(400).json({ status: "fail", message: "예기치 못한 문제로 update 실패" });
   }
 };
 
@@ -82,7 +85,7 @@ taskController.deleteTask = async (req, res) => {
     const deleteItem = await Task.findByIdAndDelete(req.params.id);
     res.status(200).json({ status: "success", data: deleteItem });
   } catch (error) {
-    res.status(400).json({ status: "fail", error });
+    res.status(400).json({ status: "fail", message: "예기치 못한 문제로 삭제 실패" });
   }
 };
 

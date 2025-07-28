@@ -8,21 +8,23 @@ const JWT_SECRET_KEY = process.env.JWT_SECRET_KEY; //process.env는 Node.js에�
 const userSchema = Schema({
   name: {
     type: String,
-    required: true
+    required: [true, '이름은 필수 입력사항입니다.'] // 사용자 친화적 메시지 제공을 위한  Mongoose의 validation 에러를 커스터마이징
   },
   email: {
     type: String,
-    required: true
+    required: [true, '이메일은 필수 입력사항입니다.'] // 사용자 친화적 메시지 제공을 위한  Mongoose의 validation 에러를 커스터마이징
   },
   password: {
     type: String,
-    required: true
+    required: true  // 비번 입력 안 해도 비번이 자동 생성 되는 오류가 있어서  userController.createUser에서 오류 핸들링
   }
 }, { timestamps: true });
 
 userSchema.methods.toJSON = function () {
   const obj = this._doc;
   delete obj.password;
+  delete obj.updatedAt; //  빼고 싶은 정보 임의 추가
+  delete obj.__v;  // 빼고 싶은 정보 임의 추가가
   return obj;
 };
 
